@@ -1,0 +1,17 @@
+{
+  "HALProvider": {
+    "Other Devices": {
+      "Talon SRX[3]": {
+        "header": {
+          "open": true
+        }
+      }
+    }
+  },
+  "NTProvider": {
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/LiveWindow/Ungrouped/PIDController[1]": "PIDController"
+    }
+  }
+}
