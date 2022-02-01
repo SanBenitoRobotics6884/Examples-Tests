@@ -79,14 +79,14 @@ public class Robot extends TimedRobot {
 	public static final int kPIDLoopIdx = 0;
 	public static final int kSlotIdx = 0;
 
-	static int kCruiseVelocity = 3000;
-	static int kCruiseAcceleration = 3000;
-	static int kSmoothing = 0; //Motion Magic Smoothing. [0,8]
+	static int kCruiseVelocity = 10000;
+	static int kCruiseAcceleration = 10000;
+	static int kSmoothing = 3; //Motion Magic Smoothing. [0,8]
 
-	static double kP = 0.2;
+	static double kP = 1;
 	static double kI = 0;
 	static double kD = 0;
-	static double kF = 0.2;
+	static double kF = 0.4;
 	static double kIZ = 0;
 	static double kPeakOutput = 1;
 
@@ -155,7 +155,7 @@ public class Robot extends TimedRobot {
 
 		/* Get gamepad axis - forward stick is positive */
 		double stickY = -1.0 * m_controller.getY(); 
-		if (Math.abs(stickY) < 0.10) { stickY = 0; } /* deadband 10% */
+		if (Math.abs(stickY) < 0.05) { stickY = 0; } /* deadband 10% */
 
 		/**
 		 * Perform Motion Magic when Button 1 is held, else run Percent Output, which can
