@@ -90,6 +90,9 @@ public class Robot extends TimedRobot {
 	static double kIZ = 0;
 	static double kPeakOutput = 1;
 
+	static final double kInitPosition = 0;
+	static final double kDeployPosition = 4096 / 4;
+
 	public void robotInit() {
 
 		m_motor.configFactoryDefault();
@@ -162,15 +165,13 @@ public class Robot extends TimedRobot {
 		 * be used to confirm hardware setup.
 		 */
 		if (m_controller.getRawButton(1)) {
-			/* Motion Magic */
-      
-			/* 4096 ticks/rev * 1/2 Rotation in either direction */
-			double targetPos = stickY * 4096 * 0.5;
-			m_motor.set(ControlMode.MotionMagic, targetPos);
-
-		} else {
+			m_motor.set(ControlMode.MotionMagic, kDeployPosition);
+		} else if (m_controller.getRawButton(2)) {
+			m_motor.set(ControlMode.MotionMagic, kInitPosition);
+		} 	else {
 			/* Percent Output */
 			m_motor.set(ControlMode.PercentOutput, stickY * 0.5);
+			SmartDashboard.putNumber("Position", m_motor.getSensorCollection().getPulseWidthPosition() & 0xFFF);
 		}
     SmartDashboard.putNumber("Motor Output", m_motor.getMotorOutputVoltage());
 	}
