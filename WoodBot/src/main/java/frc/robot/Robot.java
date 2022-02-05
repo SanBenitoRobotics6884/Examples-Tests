@@ -4,11 +4,12 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 
 public class Robot extends TimedRobot {
   
-
+  Joystick m_joystick = new Joystick(0);
   
   @Override
   public void robotInit() {
