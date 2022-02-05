@@ -39,9 +39,9 @@ public class Robot extends TimedRobot {
 
   // Spark MAX Can id's
   private static final int kLFrontID = 1;
-  private static final int kLRearID = 10;
-  private static final int kRFrontID = 2;
-  private static final int kRRearID = 20;
+  private static final int kLRearID = 2;
+  private static final int kRFrontID = 3;
+  private static final int kRRearID = 4;
   
   // Initialize Spark Maxs
   private CANSparkMax m_lFrontMotor = new CANSparkMax(kLFrontID, MotorType.kBrushless);
