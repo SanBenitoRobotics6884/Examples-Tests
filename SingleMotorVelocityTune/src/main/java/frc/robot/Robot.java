@@ -1,106 +1,242 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.REVPhysicsSim;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxPIDController;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
+import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-/**
- * The VM is configured to automatically run this class, and to call the functions corresponding to
- * each mode, as described in the TimedRobot documentation. If you change the name of this class or
- * the package after creating this project, you must also update the build.gradle file in the
- * project.
- */
 public class Robot extends TimedRobot {
-  private static final String kDefaultAuto = "Default";
-  private static final String kCustomAuto = "My Auto";
-  private String m_autoSelected;
-  private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
-  /**
-   * This function is run when the robot is first started up and should be used for any
-   * initialization code.
-   */
+  // initialize constants
+  private static final double kRPMConversion = 9.5493; // Radians/sec to RPM
+  private static final double kGearing = 10.71; // Gearbox gear ration 10.71:1
+  private static final double kWheelRadius = 0.1524; // meters
+  private static final double kMaxSpeedTranslational = 4; // m/s
+  private static final double kMaxSpeedRot = 3; // rad/s
+  private double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput,
+                maxRPM, maxVel, minVel, maxAcc, allowedErr;
+  /*
+  private double kPGyro;
+  private double initialHeading;
+  private double gyroError;
+  */
+
+  // Spark MAX Can id's
+  private static final int kMotorID = 1;
+  
+  // Initialize Spark Maxs
+  private CANSparkMax m_motor = new CANSparkMax(kMotorID, MotorType.kBrushless);
+  // Initialize NEO encoders
+  private RelativeEncoder m_encoder;
+
+  // Initialize Onboard PID Controllers
+  private SparkMaxPIDController m_pidController;
+
+  // Initialize Translation2d objects for wheelbase
+  private Translation2d m_frontLeftLocation;
+  private Translation2d m_frontRightLocation;
+  private Translation2d m_backLeftLocation;
+  private Translation2d m_backRightLocation;
+
+  // Initialize Target Wheel Speeds
+  private double frontLeft;
+  private double frontRight;
+  private double backLeft;
+  private double backRight;
+
+  private Joystick m_joystick;
+
+  /* private ADIS16448_IMU gyro = new ADIS16448_IMU(); */
+
+  // Initialize classes for kinematics
+  MecanumDriveKinematics m_kinematics;
+  MecanumDriveWheelSpeeds wheelSpeeds;
+  ChassisSpeeds speeds;
+
   @Override
   public void robotInit() {
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
-    SmartDashboard.putData("Auto choices", m_chooser);
+
+    // Velocity Control Constants
+    kP = 6e-3; 
+    kI = 0;
+    kD = 0; 
+    kIz = 0; 
+    kFF = 0.000015; 
+    kMaxOutput = 1; 
+    kMinOutput = -1;
+    maxRPM = 5700;
+
+    // Smart Motion Constants
+    maxVel = 2000; // RPM
+    minVel = 0;
+    maxAcc = 1500; // RPM/s
+    allowedErr = 20;
+
+    /* kPGyro = 0.05 */
+
+    // Display constants on dashboard for live tuning
+    SmartDashboard.putNumber("P Gain", kP);
+    SmartDashboard.putNumber("I Gain", kI);
+    SmartDashboard.putNumber("D Gain", kD);
+    SmartDashboard.putNumber("I Zone", kIz);
+    SmartDashboard.putNumber("Feed Forward", kFF);
+    SmartDashboard.putNumber("Max Output", kMaxOutput);
+    SmartDashboard.putNumber("Min Output", kMinOutput);
+    SmartDashboard.putNumber("Max Acceleration", maxAcc);
+    SmartDashboard.putNumber("Allowed Closed Loop Error", allowedErr);
+    
+    m_joystick = new Joystick(0);
+
+    /* gyro = new ADIS16448_IMU(); */
+
+    m_motor.restoreFactoryDefaults();
+
+    // Initialize encoders from NEOs connected to each spark
+    m_encoder = m_motor.getEncoder();
+
+    m_pidController = m_motor.getPIDController();
+
+    m_pidController.setP(kP);
+    m_pidController.setI(kI);
+    m_pidController.setD(kD);
+    m_pidController.setIZone(kIz);
+    m_pidController.setFF(kFF);
+    m_pidController.setOutputRange(kMinOutput, kMaxOutput);
+
+    int smartMotionSlot = 0;
+    m_pidController.setSmartMotionMaxVelocity(maxVel, smartMotionSlot);
+    m_pidController.setSmartMotionMinOutputVelocity(minVel, smartMotionSlot);
+    m_pidController.setSmartMotionMaxAccel(maxAcc, smartMotionSlot);
+    m_pidController.setSmartMotionAllowedClosedLoopError(allowedErr, smartMotionSlot);
+
+    // Distane from each wheel to center
+    m_frontLeftLocation = new Translation2d(0.381, 0.381);
+    m_frontRightLocation = new Translation2d(0.381, -0.381);
+    m_backLeftLocation = new Translation2d(-0.381, 0.381);
+    m_backRightLocation = new Translation2d(-0.381, -0.381);
+
+    // Kinematics handles drivetrain math
+    m_kinematics = new MecanumDriveKinematics(
+      m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation
+    );
+
   }
 
-  /**
-   * This function is called every robot packet, no matter the mode. Use this for items like
-   * diagnostics that you want ran during disabled, autonomous, teleoperated and test.
-   *
-   * <p>This runs after the mode specific periodic functions, but before LiveWindow and
-   * SmartDashboard integrated updating.
-   */
   @Override
-  public void robotPeriodic() {}
+  public void simulationInit() {
+    REVPhysicsSim.getInstance().addSparkMax(m_motor, DCMotor.getNEO(1));
+  }
 
-  /**
-   * This autonomous (along with the chooser code above) shows how to select between different
-   * autonomous modes using the dashboard. The sendable chooser code works with the Java
-   * SmartDashboard. If you prefer the LabVIEW Dashboard, remove all of the chooser code and
-   * uncomment the getString line to get the auto name from the text box below the Gyro
-   *
-   * <p>You can add additional auto modes by adding additional comparisons to the switch structure
-   * below with additional strings. If using the SendableChooser make sure to add them to the
-   * chooser code above as well.
-   */
+  @Override
+  public void simulationPeriodic() {
+    REVPhysicsSim.getInstance().run();
+  }
+
+  @Override
+  public void robotPeriodic() {
+    // Display velocity setpoints
+    SmartDashboard.putNumber("LFSetpoint", frontLeft);
+    SmartDashboard.putNumber("LRSetpoint", backLeft);
+    SmartDashboard.putNumber("FRSetpoint", frontRight);
+    SmartDashboard.putNumber("RRSetpoint", backRight);
+
+    // Display motor speeds
+    SmartDashboard.putNumber("Encoder RPM", m_encoder.getVelocity());
+  }
+
   @Override
   public void autonomousInit() {
-    m_autoSelected = m_chooser.getSelected();
-    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
-    System.out.println("Auto selected: " + m_autoSelected);
+    /* initialHeading = gyro.getAngle(); */
   }
 
-  /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    switch (m_autoSelected) {
-      case kCustomAuto:
-        // Put custom auto code here
-        break;
-      case kDefaultAuto:
-      default:
-        // Put default auto code here
-        break;
-    }
   }
 
-  /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {}
 
-  /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
 
-  /** This function is called once when the robot is disabled. */
+    // Get PID constants from dashboard
+    double p = SmartDashboard.getNumber("P Gain", 0);
+    double i = SmartDashboard.getNumber("I Gain", 0);
+    double d = SmartDashboard.getNumber("D Gain", 0);
+    double iz = SmartDashboard.getNumber("I Zone", 0);
+    double ff = SmartDashboard.getNumber("Feed Forward", 0);
+    double max = SmartDashboard.getNumber("Max Output", 0);
+    double min = SmartDashboard.getNumber("Min Output", 0);
+    double maxA = SmartDashboard.getNumber("Max Acceleration", 0);
+    double allE = SmartDashboard.getNumber("Allowed Closed Loop Error", 0);
+
+    // Set PID controller constants to values obtained from user
+    // if each values is modified by the user
+    if((p != kP)) { m_pidController.setP(p); kP = p; }
+    if((i != kI)) { m_pidController.setI(i); kI = i; }
+    if((d != kD)) { m_pidController.setD(d); kD = d; }
+    if((iz != kIz)) { m_pidController.setIZone(iz); kIz = iz; }
+    if((ff != kFF)) { m_pidController.setFF(ff); kFF = ff; }
+    if((max != kMaxOutput) || (min != kMinOutput)) { 
+      m_pidController.setOutputRange(min, max); 
+      kMinOutput = min; kMaxOutput = max; 
+    }
+    if((maxA != maxAcc)) { m_pidController.setSmartMotionMaxAccel(maxA,0); maxAcc = maxA; }
+    if((allE != allowedErr)) { m_pidController.setSmartMotionAllowedClosedLoopError(allE,0); allowedErr = allE; }
+
+
+    // Set target speeds for robot
+    speeds = new ChassisSpeeds(
+      m_joystick.getRawAxis(1) * kMaxSpeedTranslational, // Forward and backward
+      m_joystick.getRawAxis(0) * kMaxSpeedTranslational, // Strafing
+      m_joystick.getRawAxis(4) * kMaxSpeedRot // Rotation
+    );
+
+    /*
+    error = initialHeading - gyro.getAngle();
+    speeds = new ChassisSpeeds(
+      m_joystick.getY() * kMaxSpeedTranslational,
+      m_joystick.getX() * kMaxSpeedTranslational,
+      kPGyro * error
+    );
+    */
+
+    // Get individual wheel speeds from chassis speeds
+    wheelSpeeds = m_kinematics.toWheelSpeeds(speeds);
+
+    // Convert wheel speeds (m/s) to motor speeds (RPM)
+    frontLeft = wheelSpeeds.frontLeftMetersPerSecond / kWheelRadius * kGearing * kRPMConversion;
+    frontRight = wheelSpeeds.frontRightMetersPerSecond / kWheelRadius * kGearing * kRPMConversion;
+    backLeft = wheelSpeeds.rearLeftMetersPerSecond / kWheelRadius * kGearing * kRPMConversion;
+    backRight = wheelSpeeds.rearRightMetersPerSecond / kWheelRadius * kGearing * kRPMConversion;
+
+    // Update velocity targets for onboard control loops
+    m_pidController.setReference(frontLeft, CANSparkMax.ControlType.kSmartVelocity);
+
+  }
+
   @Override
   public void disabledInit() {}
 
-  /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {}
 
-  /** This function is called once when test mode is enabled. */
   @Override
   public void testInit() {}
 
-  /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {}
-
-  /** This function is called once when the robot is first started up. */
-  @Override
-  public void simulationInit() {}
-
-  /** This function is called periodically whilst in simulation. */
-  @Override
-  public void simulationPeriodic() {}
 }
+
+//Add Gyro & Field Centric
+//Measure Wheelbase
