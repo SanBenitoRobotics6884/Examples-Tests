@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends TimedRobot {
 
   private static double kMaxSpeed = 0.4;
+  private static double kMaxRotTarget = 100; //deg per second
+  private static double kP = 0.01;
 
   private Joystick m_stick;
   private CANSparkMax m_lFront;
@@ -61,9 +63,14 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
+
+    double zRate = m_gyro.getGyroRateZ();
+    double targetRate = m_stick.getRawAxis(4) * kMaxRotTarget;
+    double error = targetRate - zRate;
+
     double forw = m_stick.getRawAxis(1) * kMaxSpeed;
     double strafe = m_stick.getRawAxis(0) * kMaxSpeed;
-    double rot = m_stick.getRawAxis(4) * kMaxSpeed;
+    double rot = -error * kP;
     m_drive.driveCartesian(forw, strafe, rot);
   }
 }
