@@ -4,15 +4,19 @@
 
 package frc.robot;
 
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 
 public class Robot extends TimedRobot {
-  
-
+  WPI_VictorSPX m_LauncherMotor = new WPI_VictorSPX(1);
+  Joystick m_Joystick = new Joystick(0);
+  static double kMaxSpeed = 0.7;
   
   @Override
   public void robotInit() {
-    
+     m_LauncherMotor.configFactoryDefault();
   }
 
   
@@ -37,7 +41,13 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    if (m_Joystick.getTrigger()) {
+      m_LauncherMotor.set(kMaxSpeed);
+    } else {
+      m_LauncherMotor.set(0);
+    }
+  }
 
   /** This function is called once when the robot is disabled. */
   @Override
