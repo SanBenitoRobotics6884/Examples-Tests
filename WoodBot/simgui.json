@@ -10,13 +10,19 @@
         "header": {
           "open": true
         }
+      },
+      "Victor SPX[2]": {
+        "header": {
+          "open": true
+        }
       }
     }
   },
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
-      "/LiveWindow/Ungrouped/Victor SPX [1]": "Motor Controller"
+      "/LiveWindow/Ungrouped/Victor SPX [1]": "Motor Controller",
+      "/LiveWindow/Ungrouped/Victor SPX [2]": "Motor Controller"
     }
   }
 }
