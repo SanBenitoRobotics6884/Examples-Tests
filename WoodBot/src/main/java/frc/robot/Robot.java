@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 public class Robot extends TimedRobot {
   
   Joystick m_joystick = new Joystick(0);
+
   WPI_VictorSPX m_LowerPulley = new WPI_VictorSPX(1);
   CANSparkMax m_IntakeMotor = new CANSparkMax(1, MotorType.kBrushless);
   static final double kPulleySpeed = 0.3;
