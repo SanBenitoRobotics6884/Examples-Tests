@@ -19,7 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends TimedRobot {
 
   // initialize constants
-  private static final boolean isOpenLoop = true; // Drive mode
+  private static final boolean isOpenLoop = false; // Drive mode
   private static final boolean kRightSideInverted = true; // Invert right motors
   private static final double kRPMConversion = 9.5493; // Radians/sec to RPM
   private static final double kGearing = 10.71; // Gearbox gear ration 10.71:1
@@ -82,7 +82,7 @@ public class Robot extends TimedRobot {
   MecanumDriveWheelSpeeds wheelSpeeds;
   ChassisSpeeds speeds;
 
-  private MecanumDrive m_robotDrive;
+  //private MecanumDrive m_robotDrive;
 
   @Override
   public void robotInit() {
@@ -199,7 +199,7 @@ public class Robot extends TimedRobot {
       m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation
     );
 
-    m_robotDrive = new MecanumDrive(m_lFrontMotor, m_lRearMotor, m_rFrontMotor, m_rRearMotor);
+    //m_robotDrive = new MecanumDrive(m_lFrontMotor, m_lRearMotor, m_rFrontMotor, m_rRearMotor);
 
   }
 
@@ -315,17 +315,19 @@ public class Robot extends TimedRobot {
 
     if (isOpenLoop) {
       // Drive using built in mecanum class. Does not use feedback
+      /*
       m_robotDrive.driveCartesian(
-        m_joystick.getX() * kSpeedScale,
-        -m_joystick.getY() * kStrafeScale,
-        m_joystick.getZ() * kTwistScale
+        -m_joystick.getRawAxis(1) * kSpeedScale,
+        -m_joystick.getRawAxis(0) * kStrafeScale,
+        m_joystick.getRawAxis(4) * kTwistScale
       );
+      */
     } else {
       // Set target speeds for robot
       speeds = new ChassisSpeeds(
-        m_joystick.getY() * kMaxSpeedTranslational, // Forward and backward
-        m_joystick.getX() * kMaxSpeedTranslational, // Strafing
-        m_joystick.getZ() * kMaxSpeedRot // Rotation
+        -m_joystick.getRawAxis(1) * kMaxSpeedTranslational, // Forward and backward
+        -m_joystick.getRawAxis(0) * kMaxSpeedTranslational, // Strafing
+        m_joystick.getRawAxis(4) * kMaxSpeedRot // Rotation
       );
 
       /*

@@ -14,9 +14,11 @@ import edu.wpi.first.wpilibj.TimedRobot;
 public class Robot extends TimedRobot {
   
   Joystick m_joystick = new Joystick(0);
-
   WPI_VictorSPX m_LowerPulley = new WPI_VictorSPX(1);
   CANSparkMax m_IntakeMotor = new CANSparkMax(1, MotorType.kBrushless);
+  WPI_VictorSPX m_LauncherMotor = new WPI_VictorSPX(1);
+  
+  static double kMaxSpeed = 0.7;
   static final double kPulleySpeed = 0.3;
   static final double kIntakeSpeed = 0.5;
   
@@ -24,7 +26,7 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     m_LowerPulley.configFactoryDefault();
     m_IntakeMotor.restoreFactoryDefaults();
-
+    m_LauncherMotor.configFactoryDefault();
   }
 
   
@@ -50,6 +52,11 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+    if (m_Joystick.getTrigger()) {
+      m_LauncherMotor.set(kMaxSpeed);
+    } else {
+      m_LauncherMotor.set(0);
+    }
     /*make constants for lower pulley speed and intake speed*/
     if (m_joystick.getRawButton(2)) {
       m_LowerPulley.set(kPulleySpeed);
