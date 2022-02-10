@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -14,12 +15,12 @@ import edu.wpi.first.wpilibj.TimedRobot;
 public class Robot extends TimedRobot {
   
   Joystick m_joystick = new Joystick(0);
-  WPI_VictorSPX m_LowerPulley = new WPI_VictorSPX(1);
-  CANSparkMax m_IntakeMotor = new CANSparkMax(3, MotorType.kBrushless);
-  WPI_VictorSPX m_LauncherMotor = new WPI_VictorSPX(2);
+  WPI_VictorSPX m_LowerPulley = new WPI_VictorSPX(20);
+  CANSparkMax m_IntakeMotor = new CANSparkMax(5, MotorType.kBrushless);
+  WPI_TalonSRX m_LauncherMotor = new WPI_TalonSRX(4);
   
-  static double kMaxSpeed = 0.7;
-  static final double kPulleySpeed = 0.3;
+  static double kMaxSpeed = 1.0;
+  static final double kPulleySpeed = 0.5;
   static final double kIntakeSpeed = 0.5;
   
   @Override
@@ -59,7 +60,7 @@ public class Robot extends TimedRobot {
     }
     /*make constants for lower pulley speed and intake speed*/
     if (m_joystick.getRawButton(2)) {
-      m_LowerPulley.set(kPulleySpeed);
+      m_LowerPulley.set(-kPulleySpeed);
       m_IntakeMotor.set(kIntakeSpeed);
     } else {
       m_LowerPulley.set(0);
