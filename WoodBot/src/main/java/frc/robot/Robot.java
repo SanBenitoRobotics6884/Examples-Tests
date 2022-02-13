@@ -60,11 +60,14 @@ public class Robot extends TimedRobot {
     }
     /*make constants for lower pulley speed and intake speed*/
     if (m_joystick.getRawButton(2)) {
-      m_LowerPulley.set(-kPulleySpeed);
       m_IntakeMotor.set(kIntakeSpeed);
     } else {
-      m_LowerPulley.set(0);
       m_IntakeMotor.set(0);
+    }
+    if (m_joystick.getRawButton(11)) {
+      m_LowerPulley.set(kPulleySpeed);
+    } else {
+      m_LowerPulley.set(0);
     }
   }
 

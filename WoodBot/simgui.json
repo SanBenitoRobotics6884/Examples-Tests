@@ -6,7 +6,22 @@
           "open": true
         }
       },
+      "SPARK MAX [5]": {
+        "header": {
+          "open": true
+        }
+      },
+      "Talon SRX[4]": {
+        "header": {
+          "open": true
+        }
+      },
       "Victor SPX[1]": {
+        "header": {
+          "open": true
+        }
+      },
+      "Victor SPX[20]": {
         "header": {
           "open": true
         }
@@ -21,7 +36,9 @@
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
+      "/LiveWindow/Ungrouped/Talon SRX [4]": "Motor Controller",
       "/LiveWindow/Ungrouped/Victor SPX [1]": "Motor Controller",
+      "/LiveWindow/Ungrouped/Victor SPX [20]": "Motor Controller",
       "/LiveWindow/Ungrouped/Victor SPX [2]": "Motor Controller"
     }
   }
