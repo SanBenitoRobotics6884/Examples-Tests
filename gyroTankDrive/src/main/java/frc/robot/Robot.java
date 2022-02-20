@@ -11,6 +11,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.ADIS16448_IMU;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -24,7 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * project.
  */
 public class Robot extends TimedRobot {
-  ADIS16448_IMU gyro = new ADIS16448_IMU(ADIS16448_IMU.IMUAxis.kZ, SPI.Port.kMXP, ADIS16448_IMU.CalibrationTime._1s);
+  ADXRS450_Gyro gyro = new ADXRS450_Gyro();
   WPI_TalonSRX rightFront = new WPI_TalonSRX(2);
   WPI_VictorSPX rightFollower = new WPI_VictorSPX(20);
   WPI_TalonSRX leftFront = new WPI_TalonSRX(1);
@@ -32,10 +33,11 @@ public class Robot extends TimedRobot {
   DifferentialDrive gyroTank = new DifferentialDrive(leftFront, rightFront);
   Joystick controller = new Joystick(0);
   static final double kMaxSpeed = 0.75; 
-  double kP = 0.01;
-  double kD = 0;
+  static final double kMaxTurn = 360;
+  double kP = 0.008;
+  double kD = 0.00005;
   double kF = 0.1;
-  PIDController pid = new PIDController(0.005, 0, 0);
+  PIDController pid = new PIDController(kP, 0, kD);
 
 
 
@@ -65,7 +67,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     SmartDashboard.putData("Gyro", gyro);
-    SmartDashboard.putNumber("Gyro Z", gyro.getAngle());
+    SmartDashboard.putNumber("Gyro Z", gyro.getRate());
     kP = SmartDashboard.getNumber("KP", 0);
     kD = SmartDashboard.getNumber("KD", 0);
     kF = SmartDashboard.getNumber("KF", 0);
@@ -84,10 +86,10 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    
+    double target = controller.getX()*kMaxTurn;
     double forw = kMaxSpeed * controller.getRawAxis(1); /* positive is forward */
     double turnManual = kMaxSpeed * controller.getRawAxis(0); /* positive is right */
-    double turnPID = pid.calculate(gyro.getAngle(), 0);
+    double turnPID = pid.calculate(gyro.getRate(), target);
     if (turnPID > 0) {
       turnPID -= kF;
     } else if (turnPID < 0) {
